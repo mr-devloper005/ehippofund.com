@@ -9,6 +9,8 @@ import { taskPageMetadata } from '@/config/site.content'
 import { taskPageVoices } from '@/editable/content/task-pages.content'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
 import { getTaskTheme, taskThemeStyle } from '@/editable/theme/task-themes'
+import { editableTaskLabel, editableTaskLabelLower } from '@/editable/content/task-labels'
+import { Ads, getSlotSizes } from '@/lib/ads'
 
 export const revalidate = 3
 
@@ -46,6 +48,7 @@ const getField = (post: SitePost, keys: string[]) => {
   return ''
 }
 const cleanDomain = (value: string) => value.replace(/^https?:\/\//, '').replace(/\/$/, '')
+const pickRandom = (sizes: string[]) => sizes[Math.floor(Math.random() * sizes.length)]
 
 function pageHref(basePath: string, category: string, page: number) {
   const params = new URLSearchParams()
@@ -90,12 +93,13 @@ export function TaskArchiveView({ task, posts, pagination, category, basePath }:
   const voice = taskPageVoices[task]
   const theme = getTaskTheme(task)
   const page = pagination.page || 1
-  const label = taskConfig?.label || task
+  const label = editableTaskLabel(task, taskConfig?.label || task)
   const categoryLabel = category === 'all' ? 'All categories' : CATEGORY_OPTIONS.find((item) => item.slug === category)?.name || category
 
   return (
     <EditableSiteShell>
       <main style={taskThemeStyle(task)} className="min-h-screen bg-[var(--tk-bg)] text-[var(--tk-text)]">
+        
         <header className="relative overflow-hidden border-b border-[var(--tk-line)]">
           <div className="pointer-events-none absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_0%,var(--tk-glow),transparent_70%)]" />
           <div className="relative mx-auto max-w-[var(--editable-container)] px-6 py-20 sm:py-28 lg:px-8">
@@ -136,10 +140,22 @@ export function TaskArchiveView({ task, posts, pagination, category, basePath }:
                 <button className="inline-flex h-11 items-center rounded-full bg-[var(--tk-accent)] px-5 text-sm font-semibold text-[var(--tk-on-accent)] transition hover:opacity-90">Apply</button>
               </form>
             </div>
+            {task === 'sbm' ? (
+              <div className="mt-8">
+                <Ads slot="header" size={pickRandom(getSlotSizes('header'))} showLabel />
+              </div>
+            ) : null}
           </div>
         </header>
 
+        
+
         <section className="mx-auto max-w-[var(--editable-container)] px-6 py-16 sm:py-20 lg:px-8">
+          {task === 'listing' ? (
+            <div className="mb-8">
+              <Ads slot="in-feed" size={pickRandom(getSlotSizes('in-feed'))} showLabel />
+            </div>
+          ) : null}
           {posts.length ? (
             <div className={taskGrid[task]}>
               {posts.map((post, index) => <ArchivePostCard key={post.id || post.slug} post={post} task={task} basePath={basePath} index={index} />)}
@@ -148,9 +164,10 @@ export function TaskArchiveView({ task, posts, pagination, category, basePath }:
             <div className="mx-auto max-w-xl rounded-[var(--tk-radius)] border border-dashed border-[var(--tk-line)] bg-[var(--tk-surface)] px-8 py-16 text-center">
               <Search className="mx-auto h-7 w-7 text-[var(--tk-muted)]" />
               <h2 className="editable-display mt-5 text-2xl font-semibold tracking-[-0.02em]">Nothing here yet</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--tk-muted)]">Try another category, or check back after new {label.toLowerCase()} are published.</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--tk-muted)]">Try another category, or check back after new {editableTaskLabelLower(task, label)} are published.</p>
             </div>
           )}
+          
 
           {posts.length ? (
             <nav className="mt-16 flex items-center justify-center gap-3 text-sm">
@@ -160,8 +177,16 @@ export function TaskArchiveView({ task, posts, pagination, category, basePath }:
             </nav>
           ) : null}
         </section>
+        
       </main>
+            <div className="mb-8">
+        <Ads slot="in-feed" size="banner" showLabel />
+      </div>
+
     </EditableSiteShell>
+    
+
+    
   )
 }
 
@@ -305,17 +330,24 @@ function ImageArchiveCard({ post, href, index }: { post: SitePost; href: string;
 
 function BookmarkArchiveCard({ post, href, index }: { post: SitePost; href: string; index: number }) {
   const website = getField(post, ['website', 'url', 'link'])
+
+  
   return (
+
+    
     <Link href={href} className={`${cardBase} flex gap-4 p-6`}>
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--tk-accent-soft)] text-[var(--tk-accent)]">
         <Globe className="h-5 w-5" />
       </div>
+      
       <div className="min-w-0 flex-1">
         <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--tk-muted)]">Saved · {String(index + 1).padStart(2, '0')}</span>
         <h2 className="editable-display mt-1.5 text-lg font-semibold leading-snug tracking-[-0.02em]">{post.title}</h2>
         <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--tk-muted)]">{getSummary(post)}</p>
         {website ? <p className="mt-3 truncate text-xs font-medium text-[var(--tk-accent)]">{cleanDomain(website)}</p> : null}
       </div>
+
+      
     </Link>
   )
 }
